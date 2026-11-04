@@ -38,7 +38,7 @@ export default function App() {
   const [calLoading, setCalLoading] = useState(false);
   const [currentDate, setCurrentDate] = useState(new Date());
 
-  // --- INVERSIONES (Basadas estrictamente en tus datos reales) ---
+  // --- INVERSIONES ---
   const [investments, setInvestments] = useState([
     { 
       id: "vanguard-global", 
@@ -237,7 +237,6 @@ export default function App() {
       if (inv.id === selectedFundId) {
         const newUnits = inv.units + unitsToAdd;
         const newInvested = inv.invested + investedToAdd;
-        // Mantenemos el precio unitario actual y recalculamos el valor de mercado real
         const newMarketValue = newUnits * inv.currentPrice;
         const newProfitAmount = newMarketValue - newInvested;
         const newProfitPercentage = (newProfitAmount / newInvested) * 100;
@@ -294,11 +293,8 @@ export default function App() {
   const circumference = 2 * Math.PI * 70;
 
   return (
-    <div className={`min-h-screen ${darkMode ? 'bg-slate-950 text-slate-100' : 'bg-slate-100 text-slate-900'} transition-colors duration-300 relative overflow-hidden font-sans`}>
+    <div className={`min-h-screen ${darkMode ? 'bg-slate-950 text-slate-100' : 'bg-slate-100 text-slate-900'} transition-colors duration-300 relative font-sans`}>
       
-      <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-blue-600/20 rounded-full blur-[140px] pointer-events-none" />
-      <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-emerald-600/10 rounded-full blur-[140px] pointer-events-none" />
-
       {showEditBankModal && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-md flex items-center justify-center p-4">
           <div className="bg-slate-900/90 border border-slate-700/60 rounded-3xl p-6 max-w-sm w-full shadow-2xl backdrop-blur-xl text-white">
