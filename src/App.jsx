@@ -13,7 +13,6 @@ import {
   Trash2,
   CheckCircle,
   Edit3,
-  ExternalLink,
   ChevronLeft,
   ChevronRight,
   LogIn,
@@ -25,13 +24,10 @@ const GOOGLE_CLIENT_ID = "498152528468-avgm6f7fcq90d98m8vmuu21g7084s4i.apps.goog
 
 export default function App() {
   const [darkMode, setDarkMode] = useState(true);
-  
-  // --- SALDO DE BANCO (ING) ---
   const [bankBalance, setBankBalance] = useState(201.71);
   const [showEditBankModal, setShowEditBankModal] = useState(false);
   const [tempBalanceInput, setTempBalanceInput] = useState("");
 
-  // --- CALENDARIO ICLOUD EN FORMATO MES ---
   const [events, setEvents] = useState([
     { id: 1, title: "Reunión de estrategia", day: 15, month: 3, year: 2026, source: "iCloud" },
     { id: 2, title: "Revisión cartera de inversión", day: 18, month: 3, year: 2026, source: "iCloud" }
@@ -39,7 +35,6 @@ export default function App() {
   const [calLoading, setCalLoading] = useState(false);
   const [currentDate, setCurrentDate] = useState(new Date());
 
-  // --- INVERSIONES ---
   const [investments, setInvestments] = useState([
     { 
       id: "vanguard-global", 
@@ -67,7 +62,6 @@ export default function App() {
     }
   ]);
 
-  // --- MODAL AÑADIR INVERSIÓN ---
   const [showAddInvestModal, setShowAddInvestModal] = useState(false);
   const [investStep, setInvestStep] = useState(1);
   const [selectedFundId, setSelectedFundId] = useState("");
@@ -75,7 +69,6 @@ export default function App() {
   const [addUnits, setAddUnits] = useState("");
   const [addInvested, setAddInvested] = useState("");
 
-  // --- TAREAS ---
   const [tasks, setTasks] = useState([
     { id: 1, text: "Renovar el certificado digital", completed: false },
     { id: 2, text: "Comprobar rebalanceo del fondo indexado", completed: true },
@@ -83,7 +76,6 @@ export default function App() {
   ]);
   const [newTaskText, setNewTaskText] = useState("");
 
-  // --- GMAIL API REAL ---
   const [gmailUser, setGmailUser] = useState(null);
   const [gmailMessages, setGmailMessages] = useState([
     { id: 1, from: "ING España", subject: "Tu extracto mensual está disponible", date: "10:24", unread: true },
@@ -92,7 +84,6 @@ export default function App() {
   ]);
   const [gmailLoading, setGmailLoading] = useState(false);
 
-  // Cargar SDK de Google y Calendario al iniciar
   useEffect(() => {
     const script = document.createElement('script');
     script.src = "https://accounts.google.com/gsi/client";
@@ -101,19 +92,6 @@ export default function App() {
     document.body.appendChild(script);
 
     fetchiCloudCalendar();
-
-    // Actualización de inversiones en tiempo real cada 10 segundos
-    const interval = setInterval(() => {
-      setInvestments(prev => prev.map(inv => {
-        const newPrice = inv.currentPrice * (1 + (Math.random() * 0.006 - 0.003));
-        const newMarketValue = inv.units * newPrice;
-        const newProfitAmount = newMarketValue - inv.invested;
-        const newProfitPercentage = (newProfitAmount / inv.invested) * 100;
-        return { ...inv, currentPrice: newPrice, marketValue: newMarketValue, profitAmount: newProfitAmount, profitPercentage: newProfitPercentage };
-      }));
-    }, 10000);
-
-    return () => clearInterval(interval);
   }, []);
 
   const handleGoogleLogin = () => {
@@ -121,7 +99,6 @@ export default function App() {
       alert("El script de Google se está cargando. Inténtalo de nuevo en un segundo.");
       return;
     }
-
     setGmailLoading(true);
     try {
       const client = window.google.accounts.oauth2.initTokenClient({
@@ -148,7 +125,6 @@ export default function App() {
         headers: { Authorization: `Bearer ${accessToken}` }
       });
       const data = await res.json();
-      
       if (data.messages) {
         const detailedMessages = await Promise.all(
           data.messages.map(async (msg) => {
@@ -160,7 +136,6 @@ export default function App() {
             const subject = headers.find(h => h.name === 'Subject')?.value || 'Sin asunto';
             const from = headers.find(h => h.name === 'From')?.value || 'Remitente desconocido';
             const date = headers.find(h => h.name === 'Date')?.value || '';
-            
             return {
               id: msg.id,
               from: from.split('<')[0].trim(),
@@ -180,9 +155,7 @@ export default function App() {
     }
   };
 
-  const handleGoogleLogout = () => {
-    setGmailUser(null);
-  };
+  const handleGoogleLogout = () => setGmailUser(null);
 
   const fetchiCloudCalendar = async () => {
     setCalLoading(true);
@@ -293,7 +266,6 @@ export default function App() {
     setNewFundData({ name: "", isin: "", units: "", invested: "", color: "#8B5CF6" });
   };
 
-  // --- LÓGICA CALENDARIO MES ---
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
   const firstDayOfMonth = new Date(year, month, 1).getDay();
@@ -308,14 +280,11 @@ export default function App() {
   const circumference = 2 * Math.PI * 70;
 
   return (
-    <div className={`min-h-screen ${darkMode ? 'bg-slate-950 text-slate-100' : 'bg-slate-100 text-slate-900'} transition-colors duration-300 relative overflow-hidden font-sans`}>
+    <div className={`min-h-screen ${darkMode ? 'bg-slate-950 text-slate-100' : 'bg-slate-100 text-slate-900'} transition-colors duration-300 relative font-sans`}>
       
-      <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-blue-600/20 rounded-full blur-[140px] pointer-events-none" />
-      <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-emerald-600/10 rounded-full blur-[140px] pointer-events-none" />
-
       {showEditBankModal && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="bg-slate-900/90 border border-slate-700/60 rounded-3xl p-6 max-w-sm w-full shadow-2xl backdrop-blur-xl text-white">
+          <div className="bg-slate-900 border border-slate-700/60 rounded-3xl p-6 max-w-sm w-full shadow-2xl text-white">
             <h3 className="font-bold text-lg mb-2">Actualizar Saldo ING</h3>
             <form onSubmit={handleUpdateBalance} className="space-y-4">
               <input 
@@ -333,7 +302,7 @@ export default function App() {
 
       {showAddInvestModal && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="bg-slate-900/90 border border-slate-700/60 rounded-3xl p-6 max-w-md w-full shadow-2xl backdrop-blur-xl text-white">
+          <div className="bg-slate-900 border border-slate-700/60 rounded-3xl p-6 max-w-md w-full shadow-2xl text-white">
             <div className="flex justify-between items-center mb-4">
               <h3 className="font-bold text-lg">
                 {investStep === 1 ? 'Registrar Aportación' : investStep === 2 ? 'Aportar a fondo existente' : 'Añadir nuevo activo'}
@@ -419,80 +388,57 @@ export default function App() {
         </div>
       )}
 
-      <header className="sticky top-0 z-40 border-b border-white/10 bg-slate-950/60 backdrop-blur-xl px-6 py-4 flex justify-between items-center">
+      <header className="sticky top-0 z-40 border-b border-white/10 bg-slate-900/80 backdrop-blur-xl px-6 py-4 flex justify-between items-center">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center shadow-lg shadow-blue-500/30">
             <CreditCard className="w-5 h-5 text-white" />
           </div>
           <div>
-            <h1 className="font-bold text-lg leading-tight bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">
-              Mi Dashboard PWA
-            </h1>
+            <h1 className="font-bold text-lg leading-tight text-white">Mi Dashboard PWA</h1>
             <p className="text-xs text-slate-400">Personal & Financial Hub</p>
           </div>
         </div>
 
-        <button onClick={() => setDarkMode(!darkMode)} className="p-2.5 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition backdrop-blur-md">
+        <button onClick={() => setDarkMode(!darkMode)} className="p-2.5 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition">
           {darkMode ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-slate-700" />}
         </button>
       </header>
 
-      <main className="max-w-7xl mx-auto p-4 md:p-8 space-y-8 pb-24 md:pb-8">
+      <main className="max-w-7xl mx-auto p-4 md:p-8 space-y-8 pb-24">
         
         <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          
-          <div className="bg-slate-900/40 border border-white/10 rounded-3xl p-6 backdrop-blur-xl hover:border-orange-500/40 transition">
+          <div className="bg-slate-900/40 border border-white/10 rounded-3xl p-6 backdrop-blur-xl">
             <div className="flex justify-between items-start mb-4">
-              <div className="p-3 rounded-2xl bg-orange-500/10 border border-orange-500/20 text-orange-400">
-                <CreditCard className="w-6 h-6" />
-              </div>
-              <button 
-                onClick={() => { setTempBalanceInput(bankBalance.toString()); setShowEditBankModal(true); }}
-                className="text-xs px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 flex items-center gap-1 transition"
-              >
-                <Edit3 className="w-3 h-3 text-orange-400" />
-                Editar
+              <div className="p-3 rounded-2xl bg-orange-500/10 border border-orange-500/20 text-orange-400"><CreditCard className="w-6 h-6" /></div>
+              <button onClick={() => { setTempBalanceInput(bankBalance.toString()); setShowEditBankModal(true); }} className="text-xs px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 text-slate-300 flex items-center gap-1">
+                <Edit3 className="w-3 h-3 text-orange-400" /> Editar
               </button>
             </div>
             <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Cuenta Bancaria (ING)</p>
-            <h3 className="text-3xl font-extrabold mt-1 text-white">
-              €{bankBalance.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-            </h3>
+            <h3 className="text-3xl font-extrabold mt-1 text-white">€{bankBalance.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</h3>
           </div>
 
-          <div className="bg-slate-900/40 border border-white/10 rounded-3xl p-6 backdrop-blur-xl group">
+          <div className="bg-slate-900/40 border border-white/10 rounded-3xl p-6 backdrop-blur-xl">
             <div className="flex justify-between items-start mb-4">
-              <div className="p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
-                <TrendingUp className="w-6 h-6" />
-              </div>
-              <div className="flex gap-2">
-                <button onClick={() => setShowAddInvestModal(true)} className="text-xs px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-medium flex items-center gap-1 transition">
-                  <Plus className="w-3 h-3" />
-                  Aportar
-                </button>
-              </div>
+              <div className="p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400"><TrendingUp className="w-6 h-6" /></div>
+              <button onClick={() => setShowAddInvestModal(true)} className="text-xs px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-medium flex items-center gap-1">
+                <Plus className="w-3 h-3" /> Aportar
+              </button>
             </div>
-            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Cartera de Inversión (En Vivo)</p>
-            <h3 className="text-3xl font-extrabold mt-1 text-white transition-all duration-500">
-              €{totalInvestmentValue.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-            </h3>
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Cartera de Inversión</p>
+            <h3 className="text-3xl font-extrabold mt-1 text-white">€{totalInvestmentValue.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</h3>
           </div>
 
           <div className="bg-gradient-to-br from-blue-900/40 to-indigo-900/40 border border-blue-500/30 rounded-3xl p-6 backdrop-blur-xl">
             <div className="flex justify-between items-start mb-4">
-              <div className="p-3 rounded-2xl bg-blue-500/20 text-blue-300">
-                <DollarSign className="w-6 h-6" />
-              </div>
+              <div className="p-3 rounded-2xl bg-blue-500/20 text-blue-300"><DollarSign className="w-6 h-6" /></div>
             </div>
             <p className="text-xs font-semibold text-blue-200 uppercase tracking-wider">Patrimonio Neto Total</p>
-            <h3 className="text-3xl font-extrabold mt-1 text-white transition-all duration-500">
-              €{totalNetWorth.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-            </h3>
+            <h3 className="text-3xl font-extrabold mt-1 text-white">€{totalNetWorth.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</h3>
           </div>
-
         </section>
 
-        {/* --- CALENDARIO EN FORMATO MES REAL --- */}
+        {/* CALENDARIO MES */}
         <div className="bg-slate-900/40 border border-white/10 rounded-3xl p-6 backdrop-blur-xl">
           <div className="flex justify-between items-center mb-6">
             <div className="flex items-center gap-2">
@@ -516,13 +462,11 @@ export default function App() {
 
           <div className="grid grid-cols-7 gap-2">
             {Array.from({ length: firstDayOfMonth }).map((_, index) => (
-              <div key={`empty-${index}`} className="h-24 bg-white/[0.02] rounded-2xl border border-transparent"></div>
+              <div key={`empty-${index}`} className="h-24 bg-white/[0.02] rounded-2xl"></div>
             ))}
-
             {Array.from({ length: daysInMonth }).map((_, index) => {
               const dayNum = index + 1;
               const dayEvents = events.filter(ev => ev.day === dayNum && ev.month === month && ev.year === year);
-
               return (
                 <div key={`day-${dayNum}`} className="h-24 bg-white/5 border border-white/10 rounded-2xl p-2 flex flex-col justify-between overflow-y-auto">
                   <span className="text-xs font-bold text-slate-300">{dayNum}</span>
@@ -540,13 +484,10 @@ export default function App() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          
           <div className="lg:col-span-2 space-y-8">
-            
             <div className="bg-slate-900/40 border border-white/10 rounded-3xl p-6 backdrop-blur-xl">
               <h2 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
-                <PieIcon className="w-5 h-5 text-blue-400" />
-                Desglose de Fondos Indexados
+                <PieIcon className="w-5 h-5 text-blue-400" /> Desglose de Fondos Indexados
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
                 <div className="relative flex items-center justify-center h-48">
@@ -558,7 +499,7 @@ export default function App() {
                       const strokeDashoffset = -currentOffset;
                       currentOffset += percentage * circumference;
                       return (
-                        <circle key={`circle-${inv.id}`} cx="88" cy="88" r="70" stroke={inv.color} strokeWidth="20" strokeDasharray={strokeDasharray} strokeDashoffset={strokeDashoffset} className="transition-all duration-1000" fill="transparent" />
+                        <circle key={`circle-${inv.id}`} cx="88" cy="88" r="70" stroke={inv.color} strokeWidth="20" strokeDasharray={strokeDasharray} strokeDashoffset={strokeDashoffset} fill="transparent" />
                       );
                     })}
                   </svg>
@@ -594,17 +535,14 @@ export default function App() {
                 </div>
               </div>
             </div>
-
           </div>
 
           <div className="space-y-8">
-            
-            {/* CORREO PERSONAL CON API DE GOOGLE */}
+            {/* CORREO GMAIL */}
             <div className="bg-slate-900/40 border border-white/10 rounded-3xl p-6 backdrop-blur-xl">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                  <Mail className="w-5 h-5 text-rose-400" />
-                  Correo: Personal
+                  <Mail className="w-5 h-5 text-rose-400" /> Correo: Personal
                 </h2>
                 {gmailUser && (
                   <button onClick={handleGoogleLogout} className="text-[10px] text-slate-400 hover:text-rose-400 flex items-center gap-1">
@@ -615,32 +553,23 @@ export default function App() {
 
               <div className="space-y-2 max-h-60 overflow-y-auto pr-1 mb-4">
                 {gmailMessages.map((mail) => (
-                  <div key={mail.id} className="p-3 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 transition cursor-pointer">
+                  <div key={mail.id} className="p-3 rounded-xl bg-white/5 border border-white/5">
                     <div className="flex justify-between items-start mb-1">
-                      <span className={`text-xs font-bold ${mail.unread ? 'text-white font-semibold' : 'text-slate-300'}`}>
-                        {mail.from}
-                      </span>
+                      <span className={`text-xs font-bold ${mail.unread ? 'text-white' : 'text-slate-300'}`}>{mail.from}</span>
                       <span className="text-[10px] text-slate-500">{mail.date}</span>
                     </div>
-                    <p className={`text-xs ${mail.unread ? 'text-slate-200' : 'text-slate-400'} line-clamp-1`}>
-                      {mail.subject}
-                    </p>
+                    <p className="text-xs text-slate-400 line-clamp-1">{mail.subject}</p>
                   </div>
                 ))}
               </div>
 
               {!gmailUser ? (
-                <button 
-                  onClick={handleGoogleLogin} 
-                  disabled={gmailLoading}
-                  className="w-full py-2.5 bg-blue-600 hover:bg-blue-500 rounded-xl text-xs font-semibold text-white transition flex justify-center items-center gap-2 shadow-lg shadow-blue-600/20"
-                >
-                  <LogIn className="w-4 h-4" />
-                  {gmailLoading ? "Conectando con Google..." : "Iniciar sesión en Google (Gmail)"}
+                <button onClick={handleGoogleLogin} disabled={gmailLoading} className="w-full py-2.5 bg-blue-600 hover:bg-blue-500 rounded-xl text-xs font-semibold text-white transition flex justify-center items-center gap-2">
+                  <LogIn className="w-4 h-4" /> {gmailLoading ? "Conectando..." : "Iniciar sesión en Google"}
                 </button>
               ) : (
                 <div className="p-2.5 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-center text-xs text-emerald-400 font-medium">
-                  ✓ Sincronizado en tiempo real con Gmail
+                  ✓ Sincronizado con Gmail
                 </div>
               )}
             </div>
@@ -648,39 +577,29 @@ export default function App() {
             {/* TAREAS */}
             <div className="bg-slate-900/40 border border-white/10 rounded-3xl p-6 backdrop-blur-xl">
               <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                <CheckSquare className="w-5 h-5 text-emerald-400" />
-                Recordatorios
+                <CheckSquare className="w-5 h-5 text-emerald-400" /> Recordatorios
               </h2>
               <form onSubmit={handleAddTask} className="flex gap-2 mb-4">
                 <input 
                   type="text" value={newTaskText} onChange={(e) => setNewTaskText(e.target.value)} placeholder="Añadir tarea..."
                   className="flex-1 bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none"
                 />
-                <button type="submit" className="p-2 bg-emerald-600 hover:bg-emerald-500 rounded-xl text-white">
-                  <Plus className="w-4 h-4" />
-                </button>
+                <button type="submit" className="p-2 bg-emerald-600 hover:bg-emerald-500 rounded-xl text-white"><Plus className="w-4 h-4" /></button>
               </form>
               <div className="space-y-2 max-h-56 overflow-y-auto">
                 {tasks.map((task) => (
                   <div key={task.id} className="p-3 rounded-xl bg-white/5 border border-white/5 flex items-center justify-between">
                     <div className="flex items-center gap-2 cursor-pointer" onClick={() => toggleTask(task.id)}>
                       <CheckCircle className={`w-4 h-4 ${task.completed ? 'text-emerald-400' : 'text-slate-600'}`} />
-                      <span className={`text-xs ${task.completed ? 'line-through text-slate-500' : 'text-slate-200'}`}>
-                        {task.text}
-                      </span>
+                      <span className={`text-xs ${task.completed ? 'line-through text-slate-500' : 'text-slate-200'}`}>{task.text}</span>
                     </div>
-                    <button onClick={() => deleteTask(task.id)} className="text-slate-500 hover:text-rose-400">
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
+                    <button onClick={() => deleteTask(task.id)} className="text-slate-500 hover:text-rose-400"><Trash2 className="w-3.5 h-3.5" /></button>
                   </div>
                 ))}
               </div>
             </div>
-
           </div>
-
         </div>
-
       </main>
     </div>
   );
