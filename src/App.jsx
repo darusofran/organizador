@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   CreditCard, 
   TrendingUp, 
-  Calendar, 
+  Calendar as CalendarIcon, 
   CheckSquare, 
   Mail, 
   RefreshCw, 
@@ -14,29 +14,30 @@ import {
   Trash2,
   CheckCircle,
   Edit3,
-  LogIn,
-  LogOut
+  ExternalLink,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 
 const ICLOUD_CALENDAR_URL = "webcal://p155-caldav.icloud.com/published/2/MTg1ODg4NDY5NDUxODU4OAiNiFyrFVik_7AOt_tAJYf8M1AOa2tR-obxfubLBTtec66_vpro9RWvVIKOGCq85Wimk6pXIBU-rVAv2EiPNuI";
-const GOOGLE_CLIENT_ID = "498152528468-avgm6f7fcq90d98m8vmuu21g7084s4i.apps.googleusercontent.com";
 
 export default function App() {
   const [darkMode, setDarkMode] = useState(true);
   
-  // --- SALDO DE BANCO (ING) ACTUALIZADO A 201,71€ ---
+  // --- SALDO DE BANCO (ING) ---
   const [bankBalance, setBankBalance] = useState(201.71);
   const [showEditBankModal, setShowEditBankModal] = useState(false);
   const [tempBalanceInput, setTempBalanceInput] = useState("");
 
-  // --- CALENDARIO ICLOUD ---
+  // --- CALENDARIO ICLOUD EN FORMATO MES ---
   const [events, setEvents] = useState([
-    { id: 1, title: "Reunión de estrategia", date: "Hoy, 17:00", location: "Zoom", source: "iCloud" },
-    { id: 2, title: "Revisión cartera de inversión", date: "Mañana, 10:00", location: "Personal", source: "iCloud" }
+    { id: 1, title: "Reunión de estrategia", day: 15, month: 3, year: 2026, source: "iCloud" },
+    { id: 2, title: "Revisión cartera de inversión", day: 18, month: 3, year: 2026, source: "iCloud" }
   ]);
   const [calLoading, setCalLoading] = useState(false);
+  const [currentDate, setCurrentDate] = useState(new Date());
 
-  // --- INVERSIONES (Tus fondos reales de las capturas anteriores) ---
+  // --- INVERSIONES ---
   const [investments, setInvestments] = useState([
     { 
       id: "vanguard-global", 
@@ -81,98 +82,16 @@ export default function App() {
   ]);
   const [newTaskText, setNewTaskText] = useState("");
 
-  // --- GMAIL INTEGRACIÓN REAL (CORREO PERSONAL) ---
-  const [gmailUser, setGmailUser] = useState(null);
-  const [gmailMessages, setGmailMessages] = useState([
+  // --- CORREO (GMAIL ACCESIBLE) ---
+  const [gmailMessages] = useState([
     { id: 1, from: "ING España", subject: "Tu extracto mensual está disponible", date: "10:24", unread: true },
     { id: 2, from: "Vanguard", subject: "Informe trimestral de tu cartera", date: "Ayer", unread: false },
     { id: 3, from: "Soporte Google", subject: "Seguridad de tu cuenta configurada", date: "Hace 2 días", unread: false }
   ]);
-  const [gmailLoading, setGmailLoading] = useState(false);
 
-  // Cargar Google Identity Services SDK dinámicamente
   useEffect(() => {
-    const script = document.createElement('script');
-    script.src = "https://accounts.google.com/gsi/client";
-    script.async = true;
-    script.defer = true;
-    document.body.appendChild(script);
-
     fetchiCloudCalendar();
   }, []);
-
-  const handleGoogleLogin = () => {
-    if (!window.google) {
-      alert("El script de Google se está cargando. Inténtalo de nuevo en un segundo.");
-      return;
-    }
-
-    setGmailLoading(true);
-    try {
-      const client = window.google.accounts.oauth2.initTokenClient({
-        client_id: GOOGLE_CLIENT_ID,
-        scope: 'https://www.googleapis.com/auth/gmail.readonly',
-        callback: async (response) => {
-          if (response.error) {
-            setGmailLoading(false);
-            return;
-          }
-          await fetchRealGmailMessages(response.access_token);
-        },
-      });
-      client.requestAccessToken();
-    } catch (e) {
-      console.error(e);
-      setGmailLoading(false);
-    }
-  };
-
-  const fetchRealGmailMessages = async (accessToken) => {
-    try {
-      const res = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=5', {
-        headers: { Authorization: `Bearer ${accessToken}` }
-      });
-      const data = await res.json();
-      
-      if (data.messages) {
-        const detailedMessages = await Promise.all(
-          data.messages.map(async (msg) => {
-            const detailRes = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${msg.id}?format=metadata&metadataHeaders=From&metadataHeaders=Subject&metadataHeaders=Date`, {
-              headers: { Authorization: `Bearer ${accessToken}` }
-            });
-            const detail = await detailRes.json();
-            const headers = detail.payload.headers;
-            const subject = headers.find(h => h.name === 'Subject')?.value || 'Sin asunto';
-            const from = headers.find(h => h.name === 'From')?.value || 'Remitente desconocido';
-            const date = headers.find(h => h.name === 'Date')?.value || '';
-            
-            return {
-              id: msg.id,
-              from: from.split('<')[0].trim(),
-              subject: subject,
-              date: date.slice(0, 11),
-              unread: detail.labelIds?.includes('UNREAD') || false
-            };
-          })
-        );
-        setGmailMessages(detailedMessages);
-        setGmailUser("Conectado (Gmail API)");
-      }
-    } catch (e) {
-      console.error("Error leyendo Gmail", e);
-    } finally {
-      setGmailLoading(false);
-    }
-  };
-
-  const handleGoogleLogout = () => {
-    setGmailUser(null);
-    setGmailMessages([
-      { id: 1, from: "ING España", subject: "Tu extracto mensual está disponible", date: "10:24", unread: true },
-      { id: 2, from: "Vanguard", subject: "Informe trimestral de tu cartera", date: "Ayer", unread: false },
-      { id: 3, from: "Soporte Google", subject: "Seguridad de tu cuenta configurada", date: "Hace 2 días", unread: false }
-    ]);
-  };
 
   const fetchiCloudCalendar = async () => {
     setCalLoading(true);
@@ -182,21 +101,30 @@ export default function App() {
       const res = await fetch(proxyUrl);
       if (res.ok) {
         const text = await res.text();
-        const summaryRegex = /SUMMARY:(.*)/g;
-        const matches = [...text.matchAll(summaryRegex)];
-        if (matches.length > 0) {
-          const parsedEvents = matches.slice(0, 5).map((m, idx) => ({
-            id: `ical-${idx}`,
-            title: m[1].trim(),
-            date: "Próximamente",
-            location: "iCloud Sync",
-            source: "iCloud Nativo"
-          }));
-          setEvents(parsedEvents);
-        }
+        const lines = text.split('\n');
+        let parsed = [];
+        let currentTitle = "";
+        let currentDateStr = "";
+
+        lines.forEach(line => {
+          if (line.startsWith("SUMMARY:")) currentTitle = line.replace("SUMMARY:", "").trim();
+          if (line.startsWith("DTSTART")) {
+            currentDateStr = line.split(':')[1];
+            if (currentDateStr && currentDateStr.length >= 8) {
+              const year = parseInt(currentDateStr.substring(0, 4));
+              const month = parseInt(currentDateStr.substring(4, 6)) - 1;
+              const day = parseInt(currentDateStr.substring(6, 8));
+              if (currentTitle) {
+                parsed.push({ id: Math.random(), title: currentTitle, day, month, year, source: "iCloud" });
+                currentTitle = "";
+              }
+            }
+          }
+        });
+        if (parsed.length > 0) setEvents(parsed);
       }
     } catch (e) {
-      console.log("Cargando eventos guardados...");
+      console.log("Usando eventos predeterminados");
     } finally {
       setCalLoading(false);
     }
@@ -289,6 +217,16 @@ export default function App() {
     setAddInvested("");
     setNewFundData({ name: "", isin: "", units: "", invested: "", color: "#8B5CF6" });
   };
+
+  // --- LÓGICA CALENDARIO MES ---
+  const year = currentDate.getFullYear();
+  const month = currentDate.getMonth();
+  const firstDayOfMonth = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const monthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+
+  const prevMonth = () => setCurrentDate(new Date(year, month - 1, 1));
+  const nextMonth = () => setCurrentDate(new Date(year, month + 1, 1));
 
   const totalMarketValueForChart = investments.reduce((acc, curr) => acc + curr.marketValue, 0);
   let currentOffset = 0;
@@ -482,6 +420,55 @@ export default function App() {
 
         </section>
 
+        {/* --- CALENDARIO EN FORMATO MES REAL --- */}
+        <div className="bg-slate-900/40 border border-white/10 rounded-3xl p-6 backdrop-blur-xl">
+          <div className="flex justify-between items-center mb-6">
+            <div className="flex items-center gap-2">
+              <CalendarIcon className="w-5 h-5 text-purple-400" />
+              <h2 className="text-lg font-bold text-white">Calendario iCloud ({monthNames[month]} {year})</h2>
+            </div>
+            <div className="flex items-center gap-2">
+              <button onClick={fetchiCloudCalendar} className="p-2 bg-white/5 rounded-xl hover:bg-white/10 text-slate-300">
+                <RefreshCw className={`w-4 h-4 ${calLoading ? 'animate-spin text-purple-400' : ''}`} />
+              </button>
+              <div className="flex bg-white/5 border border-white/10 rounded-xl overflow-hidden">
+                <button onClick={prevMonth} className="p-2 hover:bg-white/10 text-slate-300"><ChevronLeft className="w-4 h-4"/></button>
+                <button onClick={nextMonth} className="p-2 hover:bg-white/10 text-slate-300"><ChevronRight className="w-4 h-4"/></button>
+              </div>
+            </div>
+          </div>
+
+          {/* Días de la semana */}
+          <div className="grid grid-cols-7 gap-2 text-center text-xs font-semibold text-slate-400 mb-2">
+            <span>Dom</span><span>Lun</span><span>Mar</span><span>Mié</span><span>Jue</span><span>Vie</span><span>Sáb</span>
+          </div>
+
+          {/* Cuadrícula del mes */}
+          <div className="grid grid-cols-7 gap-2">
+            {Array.from({ length: firstDayOfMonth }).map((_, index) => (
+              <div key={`empty-${index}`} className="h-24 bg-white/[0.02] rounded-2xl border border-transparent"></div>
+            ))}
+
+            {Array.from({ length: daysInMonth }).map((_, index) => {
+              const dayNum = index + 1;
+              const dayEvents = events.filter(ev => ev.day === dayNum && ev.month === month && ev.year === year);
+
+              return (
+                <div key={`day-${dayNum}`} className="h-24 bg-white/5 border border-white/10 rounded-2xl p-2 flex flex-col justify-between overflow-y-auto">
+                  <span className="text-xs font-bold text-slate-300">{dayNum}</span>
+                  <div className="space-y-1">
+                    {dayEvents.map(ev => (
+                      <div key={ev.id} className="text-[10px] bg-purple-500/20 text-purple-200 border border-purple-500/30 rounded px-1.5 py-0.5 truncate font-medium">
+                        {ev.title}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           
           <div className="lg:col-span-2 space-y-8">
@@ -538,47 +525,20 @@ export default function App() {
               </div>
             </div>
 
-            <div className="bg-slate-900/40 border border-white/10 rounded-3xl p-6 backdrop-blur-xl">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                  <Calendar className="w-5 h-5 text-purple-400" />
-                  Calendario iPhone (iCloud)
-                </h2>
-                <button onClick={fetchiCloudCalendar} className="p-2 bg-white/5 rounded-xl hover:bg-white/10">
-                  <RefreshCw className={`w-4 h-4 ${calLoading ? 'animate-spin text-purple-400' : ''}`} />
-                </button>
-              </div>
-              <div className="space-y-3">
-                {events.map((ev) => (
-                  <div key={ev.id} className="p-3.5 rounded-2xl bg-white/5 border border-white/5 flex justify-between items-center">
-                    <div>
-                      <h4 className="text-xs font-semibold text-white">{ev.title}</h4>
-                      <p className="text-[10px] text-slate-400">{ev.date}</p>
-                    </div>
-                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-300">
-                      {ev.source}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-            
           </div>
 
           <div className="space-y-8">
             
-            {/* CORREO PERSONAL (GMAIL API REAL) */}
+            {/* CORREO PERSONAL */}
             <div className="bg-slate-900/40 border border-white/10 rounded-3xl p-6 backdrop-blur-xl">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-bold text-white flex items-center gap-2">
                   <Mail className="w-5 h-5 text-rose-400" />
                   Correo: Personal
                 </h2>
-                {gmailUser && (
-                  <button onClick={handleGoogleLogout} className="text-[10px] text-slate-400 hover:text-rose-400 flex items-center gap-1">
-                    <LogOut className="w-3 h-3" /> Desconectar
-                  </button>
-                )}
+                <a href="https://mail.google.com" target="_blank" rel="noreferrer" className="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1 font-medium">
+                  Abrir Gmail <ExternalLink className="w-3 h-3"/>
+                </a>
               </div>
 
               <div className="space-y-2 max-h-60 overflow-y-auto pr-1 mb-4">
@@ -597,20 +557,14 @@ export default function App() {
                 ))}
               </div>
 
-              {!gmailUser ? (
-                <button 
-                  onClick={handleGoogleLogin} 
-                  disabled={gmailLoading}
-                  className="w-full py-2.5 bg-blue-600 hover:bg-blue-500 rounded-xl text-xs font-semibold text-white transition flex justify-center items-center gap-2 shadow-lg shadow-blue-600/20"
-                >
-                  <LogIn className="w-4 h-4" />
-                  {gmailLoading ? "Conectando con Google..." : "Iniciar sesión en Google (Gmail)"}
-                </button>
-              ) : (
-                <div className="p-2.5 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-center text-xs text-emerald-400 font-medium">
-                  ✓ Sincronizado en tiempo real con Gmail
-                </div>
-              )}
+              <a 
+                href="https://mail.google.com" 
+                target="_blank" 
+                rel="noreferrer"
+                className="w-full py-2.5 bg-blue-600 hover:bg-blue-500 rounded-xl text-xs font-semibold text-white transition flex justify-center items-center gap-2 shadow-lg shadow-blue-600/20 block text-center"
+              >
+                Acceder a la bandeja completa de Gmail
+              </a>
             </div>
 
             {/* TAREAS */}
