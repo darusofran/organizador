@@ -16,7 +16,7 @@ import {
   ChevronLeft,
   ChevronRight,
   LogIn,
-  LogOut
+  LogOut,
   RefreshCw
 } from 'lucide-react';
 
