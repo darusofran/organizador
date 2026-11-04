@@ -36,32 +36,37 @@ export default function App() {
   const [calLoading, setCalLoading] = useState(false);
   const [currentDate, setCurrentDate] = useState(new Date());
 
-  const [investments, setInvestments] = useState([
-    { 
-      id: "vanguard-global", 
-      name: "Vanguard Global Stock Index EUR Acc", 
-      isin: "IE00B03HD191", 
-      units: 0.91, 
-      invested: 52.94,
-      currentPrice: 64.2049, 
-      marketValue: 58.43,
-      profitAmount: 5.49,
-      profitPercentage: 10.36, 
-      color: "#3B82F6" 
-    },
-    { 
-      id: "vanguard-emerging", 
-      name: "Vanguard Emerging Markets Stock Index", 
-      isin: "IE0031786696", 
-      units: 0.02, 
-      invested: 5.49,
-      currentPrice: 292.2635, 
-      marketValue: 5.85,
-      profitAmount: 0.36,
-      profitPercentage: 6.47, 
-      color: "#10B981" 
-    }
-  ]);
+  // --- INVERSIONES DINÁMICAS (Se recalculan al entrar) ---
+  const [investments, setInvestments] = useState(() => {
+    const initialFunds = [
+      { 
+        id: "vanguard-global", 
+        name: "Vanguard Global Stock Index EUR Acc", 
+        isin: "IE00B03HD191", 
+        units: 0.91, 
+        invested: 52.94,
+        currentPrice: 64.2049, 
+        color: "#3B82F6" 
+      },
+      { 
+        id: "vanguard-emerging", 
+        name: "Vanguard Emerging Markets Stock Index", 
+        isin: "IE0031786696", 
+        units: 0.02, 
+        invested: 5.49,
+        currentPrice: 292.2635, 
+        color: "#10B981" 
+      }
+    ];
+
+    // Cálculo automático en tiempo real basado en unidades y precio
+    return initialFunds.map(inv => {
+      const marketValue = inv.units * inv.currentPrice;
+      const profitAmount = marketValue - inv.invested;
+      const profitPercentage = (profitAmount / inv.invested) * 100;
+      return { ...inv, marketValue, profitAmount, profitPercentage };
+    });
+  });
 
   const [showAddInvestModal, setShowAddInvestModal] = useState(false);
   const [investStep, setInvestStep] = useState(1);
@@ -243,6 +248,7 @@ export default function App() {
     if (isNaN(units) || isNaN(invested) || !newFundData.name || !newFundData.isin) return;
 
     const initialPrice = invested / units;
+    const marketValue = invested;
     setInvestments([...investments, {
       id: `fund-${Date.now()}`,
       name: newFundData.name,
@@ -250,7 +256,7 @@ export default function App() {
       units: units,
       invested: invested,
       currentPrice: initialPrice,
-      marketValue: invested,
+      marketValue,
       profitAmount: 0,
       profitPercentage: 0,
       color: newFundData.color
@@ -276,7 +282,7 @@ export default function App() {
   const prevMonth = () => setCurrentDate(new Date(year, month - 1, 1));
   const nextMonth = () => setCurrentDate(new Date(year, month + 1, 1));
 
-  const totalMarketValueForChart = investments.reduce((acc, curr) => acc + curr.marketValue, 0);
+  const totalMarketValueForChart = investments.reduce((acc, curr) => acc + curr.marketValue, 0) || 1;
   let currentOffset = 0;
   const circumference = 2 * Math.PI * 70;
 
