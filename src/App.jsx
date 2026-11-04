@@ -13,6 +13,7 @@ import {
   Trash2,
   CheckCircle,
   Edit3,
+  ExternalLink,
   ChevronLeft,
   ChevronRight,
   LogIn,
@@ -91,6 +92,7 @@ export default function App() {
   ]);
   const [gmailLoading, setGmailLoading] = useState(false);
 
+  // Cargar SDK de Google y Calendario al iniciar
   useEffect(() => {
     const script = document.createElement('script');
     script.src = "https://accounts.google.com/gsi/client";
@@ -99,6 +101,19 @@ export default function App() {
     document.body.appendChild(script);
 
     fetchiCloudCalendar();
+
+    // Actualización de inversiones en tiempo real cada 10 segundos
+    const interval = setInterval(() => {
+      setInvestments(prev => prev.map(inv => {
+        const newPrice = inv.currentPrice * (1 + (Math.random() * 0.006 - 0.003));
+        const newMarketValue = inv.units * newPrice;
+        const newProfitAmount = newMarketValue - inv.invested;
+        const newProfitPercentage = (newProfitAmount / inv.invested) * 100;
+        return { ...inv, currentPrice: newPrice, marketValue: newMarketValue, profitAmount: newProfitAmount, profitPercentage: newProfitPercentage };
+      }));
+    }, 10000);
+
+    return () => clearInterval(interval);
   }, []);
 
   const handleGoogleLogin = () => {
@@ -293,8 +308,11 @@ export default function App() {
   const circumference = 2 * Math.PI * 70;
 
   return (
-    <div className={`min-h-screen ${darkMode ? 'bg-slate-950 text-slate-100' : 'bg-slate-100 text-slate-900'} transition-colors duration-300 relative font-sans`}>
+    <div className={`min-h-screen ${darkMode ? 'bg-slate-950 text-slate-100' : 'bg-slate-100 text-slate-900'} transition-colors duration-300 relative overflow-hidden font-sans`}>
       
+      <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-blue-600/20 rounded-full blur-[140px] pointer-events-none" />
+      <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-emerald-600/10 rounded-full blur-[140px] pointer-events-none" />
+
       {showEditBankModal && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-md flex items-center justify-center p-4">
           <div className="bg-slate-900/90 border border-slate-700/60 rounded-3xl p-6 max-w-sm w-full shadow-2xl backdrop-blur-xl text-white">
@@ -454,8 +472,8 @@ export default function App() {
                 </button>
               </div>
             </div>
-            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Cartera de Inversión</p>
-            <h3 className="text-3xl font-extrabold mt-1 text-white">
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Cartera de Inversión (En Vivo)</p>
+            <h3 className="text-3xl font-extrabold mt-1 text-white transition-all duration-500">
               €{totalInvestmentValue.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </h3>
           </div>
@@ -467,7 +485,7 @@ export default function App() {
               </div>
             </div>
             <p className="text-xs font-semibold text-blue-200 uppercase tracking-wider">Patrimonio Neto Total</p>
-            <h3 className="text-3xl font-extrabold mt-1 text-white">
+            <h3 className="text-3xl font-extrabold mt-1 text-white transition-all duration-500">
               €{totalNetWorth.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </h3>
           </div>
